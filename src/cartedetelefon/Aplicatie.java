@@ -208,7 +208,7 @@ public class Aplicatie extends javax.swing.JFrame {
                             saveList();
                         }
                         try {
-                            Thread.sleep(1 * 60 * 1000);
+                            Thread.sleep(5 * 60 * 1000);
                         } catch (InterruptedException ex) {
                             return;
                         }
