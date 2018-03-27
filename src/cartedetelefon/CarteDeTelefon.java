@@ -5,12 +5,12 @@
  */
 package cartedetelefon;
 
-import java.io.File;
-import java.io.Serializable;
-import java.util.Arrays;
+//import java.io.File;
+//import java.io.Serializable;
+//import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import javax.swing.AbstractListModel;
+//import javax.swing.AbstractListModel;
 import javax.swing.table.AbstractTableModel;
 
 /**
@@ -18,8 +18,8 @@ import javax.swing.table.AbstractTableModel;
  * @author crist
  */
 
-public class CarteDeTelefon extends AbstractTableModel implements Serializable{
-    public final static List<Abonat> abonati = new LinkedList();
+public class CarteDeTelefon extends AbstractTableModel{
+    public static List<Abonat> abonati = new LinkedList();
 
     @Override
     public int getRowCount() {
@@ -89,5 +89,13 @@ public class CarteDeTelefon extends AbstractTableModel implements Serializable{
         break;
       }
     fireTableDataChanged();
+    }
+    
+    public void setAbonati(List<Abonat> a){
+        this.abonati = a;
+        refreshCarte();
+    }
+    public List<Abonat> getAbonati(){
+        return abonati;
     }
 }

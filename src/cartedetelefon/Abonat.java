@@ -5,11 +5,13 @@
  */
 package cartedetelefon;
 
+import java.io.Serializable;
+
 /**
  *
  * @author crist
  */
-public class Abonat {
+public class Abonat implements Serializable {
     private String nume;
     private String prenume;
     private String cnp;

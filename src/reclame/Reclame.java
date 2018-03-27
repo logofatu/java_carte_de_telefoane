@@ -7,8 +7,8 @@ package reclame;
 
 import java.io.File;
 import java.io.FileFilter;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
+//import javax.swing.Icon;
+//import javax.swing.ImageIcon;
 
 /**
  *

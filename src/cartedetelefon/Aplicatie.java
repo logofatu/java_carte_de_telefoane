@@ -5,21 +5,30 @@
  */
 package cartedetelefon;
 
-import static cartedetelefon.CarteDeTelefon.abonati;
-import static java.awt.Desktop.Action.EDIT;
-import static java.awt.Event.DELETE;
-import java.awt.Point;
-import java.awt.event.ActionEvent;
+//import static cartedetelefon.CarteDeTelefon.abonati;
+//import static java.awt.Desktop.Action.EDIT;
+//import static java.awt.Event.DELETE;
+//import java.awt.Point;
+//import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+//import java.awt.event.MouseAdapter;
+//import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.FileFilter;
+//import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -32,6 +41,8 @@ import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
+import static javax.swing.JComponent.WHEN_FOCUSED;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
@@ -39,8 +50,8 @@ import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
 import javax.swing.RowSorter;
 import javax.swing.SortOrder;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
+//import javax.swing.event.TableModelEvent;
+//import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import reclame.Reclame;
@@ -57,18 +68,23 @@ public class Aplicatie extends javax.swing.JFrame {
     private Reclame r = new Reclame();
     private List<Reclame> listaReclame = new ArrayList<>();
     private CarteDeTelefon model = new CarteDeTelefon();
-    private int confirmEdit;
+//    private int confirmEdit;
     private String toolTipMobil = "Phone Number must be in the form XXXX.XXX.XXX";
     private String labelMobil = "<html>Telefon <br> XXXX.XXX.XXX</html>";
     private String toolTipFix = "Phone Number must be in the form XXX-XX-XX";
     private String labelFix = "<html>Telefon <br> XXX-XX-XX</html>";
     private Abonat editAbonat;
-    private static final String ACTIVATION = "12345";
-
+//    private File f = new File(this.getClass().getClassLoader().getResource("./cartedetelefon").getPath());
+    private File f = new File(System.getProperty("user.home") + File.separator + ".cartedetelefoane.set" + File.separator);
 //    private String labels[] = model.getColumnsName();
+    private User user = new User();
+    private ListaAbonati l = new ListaAbonati();
     
     public Aplicatie() {
         initComponents();
+
+        initSettings();
+        
         mainPane.setVisible(false);
         jLabel15.setVisible(false);
         jButton12.setVisible(false);
@@ -77,6 +93,18 @@ public class Aplicatie extends javax.swing.JFrame {
         dAbout.setLocationRelativeTo(null);
         dOrder.setLocationRelativeTo(null);
         dFilter.setLocationRelativeTo(null);
+        dActivare.setLocationRelativeTo(null);
+        dSaveDir.setLocationRelativeTo(null);
+        
+        Timer splashScreen = new Timer();
+         TimerTask task = new TimerTask(){
+             @Override
+             public void run() {
+                 splash.setVisible(false);
+                 mainPane.setVisible(true);
+             }
+         };
+         splashScreen.schedule(task, 2000);
        
         jComboBox1.setModel(new DefaultComboBoxModel(model.getColumnsName()));
         jComboBox3.setModel(new DefaultComboBoxModel(model.getColumnsName()));
@@ -112,14 +140,15 @@ public class Aplicatie extends javax.swing.JFrame {
             public void keyReleased(KeyEvent e) {
             }
         });
-
-//        tAbonati.getModel().addTableModelListener(new TableModelListener() {
-//            @Override
-//            public void tableChanged(TableModelEvent tme) {
-//                System.out.println("A intrat in lia 102");
-//            }
-//        });
         
+        telType.add(mobil);
+        telType.add(fix);
+        editTelType.add(editMobil);
+        editTelType.add(editFix);
+        
+        InputMap im = jButton13.getInputMap(WHEN_FOCUSED);
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false), "pressed");
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, true), "released");        
 
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
@@ -146,25 +175,40 @@ public class Aplicatie extends javax.swing.JFrame {
 //            }
 //        });
         
-        afisareReclame();
-        telType.add(mobil);
-        telType.add(fix);
-        editTelType.add(editMobil);
-        editTelType.add(editFix);
-        
-       Timer splashScreen = new Timer();
-        TimerTask task = new TimerTask(){
-            @Override
-            public void run() {
-                splash.setVisible(false);
-                mainPane.setVisible(true);
-            }
-        };
-        splashScreen.schedule(task, 2000);
-        
+
+//        check if registered and enable/disable buttons/menu items and reclame
+        checkRegistration();
+       
+    }
+    
+    public static String getExtension(File f) {
+        String ext = null, s = f.getName();
+        int i = s.lastIndexOf('.');
+        if (i > 0 &&  i < s.length() - 1) {
+            ext = s.substring(i+1).toLowerCase();
+        }
+        return ext;
+    }
+    private void checkRegistration(){
+        if (!user.isRegistered()){
+            afisareReclame();
+            
+            jMenuItem1.setEnabled(false);
+            jMenuItem2.setEnabled(false);
+            jMenuItem10.setEnabled(false);
+            jButton14.setEnabled(false);
+            jMenuItem9.setEnabled(true);
+        }else{
+            jMenuItem1.setEnabled(true);
+            jMenuItem2.setEnabled(true);
+            jMenuItem10.setEnabled(true);
+            jButton14.setEnabled(true);
+            jMenuItem9.setEnabled(false);
+        }
     }
 
     private void afisareReclame(){
+        rZone.removeAll();
         for (int i = 1; i <= NRRECLAME; i++) {
             Reclame r = new Reclame();
             listaReclame.add(r);
@@ -200,6 +244,135 @@ public class Aplicatie extends javax.swing.JFrame {
     
     private void orderBy(){
         dOrder.setVisible(true);
+    }
+    
+    private void saveUser(){
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(f);
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+            oos.writeObject(user);
+            oos.close();
+            fos.close();
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(Aplicatie.class.getName()).log(Level.SEVERE, null, ex);
+            mesaj(ex.getMessage(),"Eroare",JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException ex) {
+            Logger.getLogger(Aplicatie.class.getName()).log(Level.SEVERE, null, ex);
+            mesaj(ex.getMessage(),"Eroare",JOptionPane.INFORMATION_MESSAGE);
+        } finally {
+            try {
+                fos.close();
+            } catch (IOException ex) {
+                Logger.getLogger(Aplicatie.class.getName()).log(Level.SEVERE, null, ex);
+                mesaj(ex.getMessage(),"Eroare",JOptionPane.INFORMATION_MESSAGE);
+            }
+        }
+    }
+    
+    private void initSettings(){
+        FileInputStream fis = null;
+
+        if (!f.exists()){
+            try {
+                f.createNewFile();
+                saveUser();
+            } catch (IOException ex) {
+                Logger.getLogger(Aplicatie.class.getName()).log(Level.SEVERE, null, ex);
+                mesaj(ex.getMessage(),"Eroare",JOptionPane.INFORMATION_MESSAGE);
+            }
+        }
+        try {
+            User savedUser = new User();
+            fis = new FileInputStream(f);
+            ObjectInputStream ois = new ObjectInputStream(fis);
+            savedUser = (User)ois.readObject();
+            ois.close();
+            fis.close();
+            user.setRgisterd(savedUser.isRegistered());
+            user.setPathToSave(savedUser.getPathToSave());
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(Aplicatie.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(Aplicatie.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(Aplicatie.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            try {
+                fis.close();
+            } catch (IOException ex) {
+                Logger.getLogger(Aplicatie.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        
+        if (user.getPathToSave() != null){
+            if (!user.getPathToSave().exists()){
+                user.setPathToSave(null);
+                saveUser();
+            }
+            openList(user.getPathToSave());
+        }
+        
+    }
+    
+    private void openList(File listaPath){
+        FileInputStream fis = null;
+        ListaAbonati savedAbonati = null;
+        try {
+            fis = new FileInputStream(listaPath);
+            ObjectInputStream ois = new ObjectInputStream(fis);
+            savedAbonati = (ListaAbonati)ois.readObject();
+            ois.close();
+            fis.close();
+            model.setAbonati(savedAbonati.abonati);
+        } catch (FileNotFoundException ex) {
+//            Logger.getLogger(Aplicatie.class.getName()).log(Level.SEVERE, null, ex);
+            mesaj(ex.getMessage(),"Eroare",JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException | ClassNotFoundException ex) {
+//            Logger.getLogger(Aplicatie.class.getName()).log(Level.SEVERE, null, ex);
+            mesaj(ex.getMessage(),"Eroare",JOptionPane.INFORMATION_MESSAGE);
+        } finally {
+//            try {
+//                fis.close();
+//            } catch (IOException ex) {
+////                Logger.getLogger(Aplicatie.class.getName()).log(Level.SEVERE, null, ex);
+//                mesaj(ex.getMessage(),"Eroare",JOptionPane.INFORMATION_MESSAGE);
+//            }
+        }
+    }
+    
+    private void saveList(){
+        l.abonati = model.getAbonati();
+        FileOutputStream fos = null;
+        
+        if (!user.getPathToSave().exists()){
+            try {
+                user.getPathToSave().createNewFile();
+            } catch (IOException ex) {
+                Logger.getLogger(Aplicatie.class.getName()).log(Level.SEVERE, null, ex);
+                mesaj(ex.getMessage(),"Eroare",JOptionPane.INFORMATION_MESSAGE);
+            }
+        }
+        try {
+            fos = new FileOutputStream(user.getPathToSave());
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+            oos.writeObject(l);
+            oos.close();
+            fos.close();
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(Aplicatie.class.getName()).log(Level.SEVERE, null, ex);
+            mesaj(ex.getMessage(),"Eroare",JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException ex) {
+            Logger.getLogger(Aplicatie.class.getName()).log(Level.SEVERE, null, ex);
+            mesaj(ex.getMessage(),"Eroare",JOptionPane.INFORMATION_MESSAGE);
+        } finally {
+            try {
+                fos.close();
+            } catch (IOException ex) {
+                Logger.getLogger(Aplicatie.class.getName()).log(Level.SEVERE, null, ex);
+                mesaj(ex.getMessage(),"Eroare",JOptionPane.INFORMATION_MESSAGE);
+            }
+        }
     }
 
     /**
@@ -262,6 +435,14 @@ public class Aplicatie extends javax.swing.JFrame {
         jButton11 = new javax.swing.JButton();
         jLabel13 = new javax.swing.JLabel();
         jLabel14 = new javax.swing.JLabel();
+        dSaveDir = new javax.swing.JDialog();
+        fc = new javax.swing.JFileChooser();
+        dActivare = new javax.swing.JDialog();
+        jLabel16 = new javax.swing.JLabel();
+        activationField = new javax.swing.JTextField();
+        jButton13 = new javax.swing.JButton();
+        dOpen = new javax.swing.JDialog();
+        fc1 = new javax.swing.JFileChooser();
         splash = new javax.swing.JLabel();
         mainPane = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
@@ -272,6 +453,7 @@ public class Aplicatie extends javax.swing.JFrame {
         jButton3 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
         jButton5 = new javax.swing.JButton();
+        jButton14 = new javax.swing.JButton();
         jButton6 = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         tAbonati = new javax.swing.JTable();
@@ -280,6 +462,7 @@ public class Aplicatie extends javax.swing.JFrame {
         mFile = new javax.swing.JMenu();
         jMenuItem1 = new javax.swing.JMenuItem();
         jMenuItem2 = new javax.swing.JMenuItem();
+        jMenuItem10 = new javax.swing.JMenuItem();
         jSeparator1 = new javax.swing.JPopupMenu.Separator();
         jMenuItem3 = new javax.swing.JMenuItem();
         mAbonati = new javax.swing.JMenu();
@@ -316,10 +499,8 @@ public class Aplicatie extends javax.swing.JFrame {
         dAbout.getAccessibleContext().setAccessibleParent(this);
 
         dAdauga.setTitle("Adauga Abonat");
-        dAdauga.setMaximumSize(new java.awt.Dimension(600, 400));
         dAdauga.setMinimumSize(new java.awt.Dimension(600, 400));
         dAdauga.setModal(true);
-        dAdauga.setPreferredSize(new java.awt.Dimension(600, 400));
         dAdauga.getContentPane().setLayout(new java.awt.GridBagLayout());
 
         jLabel1.setText("Nume");
@@ -331,7 +512,6 @@ public class Aplicatie extends javax.swing.JFrame {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         gridBagConstraints.insets = new java.awt.Insets(9, 10, 9, 10);
         dAdauga.getContentPane().add(jLabel1, gridBagConstraints);
-        jLabel1.getAccessibleContext().setAccessibleName("Nume");
 
         addNume.setMaximumSize(new java.awt.Dimension(500, 30));
         addNume.setMinimumSize(new java.awt.Dimension(200, 30));
@@ -467,10 +647,8 @@ public class Aplicatie extends javax.swing.JFrame {
         dAdauga.getContentPane().add(jButton7, gridBagConstraints);
 
         dModifica.setTitle("Modifica Abonat");
-        dModifica.setMaximumSize(new java.awt.Dimension(600, 400));
         dModifica.setMinimumSize(new java.awt.Dimension(600, 400));
         dModifica.setModal(true);
-        dModifica.setPreferredSize(new java.awt.Dimension(600, 400));
         dModifica.getContentPane().setLayout(new java.awt.GridBagLayout());
 
         jLabel6.setText("Nume");
@@ -622,7 +800,6 @@ public class Aplicatie extends javax.swing.JFrame {
         dOrder.setMinimumSize(new java.awt.Dimension(400, 400));
         dOrder.setModal(true);
         dOrder.setName("Order by!"); // NOI18N
-        dOrder.setPreferredSize(new java.awt.Dimension(400, 400));
         dOrder.getContentPane().setLayout(new java.awt.GridBagLayout());
 
         jLabel5.setText("Order By ");
@@ -726,7 +903,6 @@ public class Aplicatie extends javax.swing.JFrame {
 
         dFilter.setTitle("Filter");
         dFilter.setMinimumSize(new java.awt.Dimension(500, 300));
-        dFilter.setPreferredSize(new java.awt.Dimension(500, 300));
         dFilter.getContentPane().setLayout(new java.awt.GridBagLayout());
 
         filterText.setMinimumSize(new java.awt.Dimension(100, 30));
@@ -787,6 +963,66 @@ public class Aplicatie extends javax.swing.JFrame {
         gridBagConstraints.gridx = 5;
         gridBagConstraints.gridy = 0;
         dFilter.getContentPane().add(jLabel14, gridBagConstraints);
+
+        dSaveDir.setMinimumSize(new java.awt.Dimension(600, 500));
+        dSaveDir.setSize(new java.awt.Dimension(600, 500));
+
+        fc.setDialogType(javax.swing.JFileChooser.SAVE_DIALOG);
+        fc.setApproveButtonToolTipText("");
+        fc.setCurrentDirectory(new File(System.getProperty("user.home") + "/Desktop"));
+        fc.setMinimumSize(new java.awt.Dimension(600, 500));
+        fc.setPreferredSize(new java.awt.Dimension(600, 500));
+        fc.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                fcActionPerformed(evt);
+            }
+        });
+        dSaveDir.getContentPane().add(fc, java.awt.BorderLayout.CENTER);
+
+        dActivare.setMinimumSize(new java.awt.Dimension(400, 200));
+        dActivare.setName("Activare"); // NOI18N
+        dActivare.getContentPane().setLayout(new java.awt.GridBagLayout());
+
+        jLabel16.setText("Introduceti codul de activare");
+        jLabel16.setToolTipText("");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.insets = new java.awt.Insets(19, 19, 19, 19);
+        dActivare.getContentPane().add(jLabel16, gridBagConstraints);
+
+        activationField.setMinimumSize(new java.awt.Dimension(100, 30));
+        activationField.setPreferredSize(new java.awt.Dimension(100, 30));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.insets = new java.awt.Insets(19, 19, 19, 19);
+        dActivare.getContentPane().add(activationField, gridBagConstraints);
+
+        jButton13.setMnemonic('z');
+        jButton13.setText("Activeaza");
+        jButton13.setSelected(true);
+        jButton13.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton13ActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.insets = new java.awt.Insets(19, 19, 19, 19);
+        dActivare.getContentPane().add(jButton13, gridBagConstraints);
+
+        dOpen.setSize(new java.awt.Dimension(600, 500));
+
+        fc1.setApproveButtonToolTipText("");
+        fc1.setCurrentDirectory(new File(System.getProperty("user.home") + "/Desktop"));
+        fc1.setMinimumSize(new java.awt.Dimension(600, 500));
+        fc1.setPreferredSize(new java.awt.Dimension(600, 500));
+        fc1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                fc1ActionPerformed(evt);
+            }
+        });
+        dOpen.getContentPane().add(fc1, java.awt.BorderLayout.CENTER);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setMinimumSize(new java.awt.Dimension(1500, 750));
@@ -859,7 +1095,7 @@ public class Aplicatie extends javax.swing.JFrame {
         });
         jPanel2.add(jButton2);
 
-        jButton3.setMnemonic('s');
+        jButton3.setMnemonic('t');
         jButton3.setText("Stergere");
         jButton3.setToolTipText("Sterge abonatul din cartea de telefon");
         jButton3.setEnabled(false);
@@ -906,6 +1142,18 @@ public class Aplicatie extends javax.swing.JFrame {
             }
         });
         jPanel2.add(jButton5);
+
+        jButton14.setBackground(new java.awt.Color(0, 153, 0));
+        jButton14.setMnemonic('s');
+        jButton14.setText("Salvare");
+        jButton14.setToolTipText("Salveaza Lista de Abonati!");
+        jButton14.setEnabled(false);
+        jButton14.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton14ActionPerformed(evt);
+            }
+        });
+        jPanel2.add(jButton14);
 
         jButton6.setMnemonic('i');
         jButton6.setText("Iesire");
@@ -961,7 +1209,21 @@ public class Aplicatie extends javax.swing.JFrame {
         jMenuItem2.setMnemonic('s');
         jMenuItem2.setText("Save");
         jMenuItem2.setEnabled(false);
+        jMenuItem2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem2ActionPerformed(evt);
+            }
+        });
         mFile.add(jMenuItem2);
+
+        jMenuItem10.setText("Save as");
+        jMenuItem10.setEnabled(false);
+        jMenuItem10.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem10ActionPerformed(evt);
+            }
+        });
+        mFile.add(jMenuItem10);
         mFile.add(jSeparator1);
 
         jMenuItem3.setMnemonic('i');
@@ -1030,6 +1292,11 @@ public class Aplicatie extends javax.swing.JFrame {
 
         jMenuItem9.setMnemonic('r');
         jMenuItem9.setText("Inregistrare");
+        jMenuItem9.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem9ActionPerformed(evt);
+            }
+        });
         mHelp.add(jMenuItem9);
         mHelp.add(jSeparator2);
 
@@ -1051,7 +1318,18 @@ public class Aplicatie extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
-        // TODO add your handling code here:
+//        fc1.setVisible(true);
+            if (fc1.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                File path = fc1.getSelectedFile();
+                if (path.isDirectory()) {
+                    mesaj("Ati ales un director!", "Eroare", JOptionPane.ERROR_MESSAGE);
+                }else{
+                    user.setPathToSave(path);
+                    saveUser();
+                    openList(user.getPathToSave());
+                }
+            }
+//        fc1.setVisible(false);
     }//GEN-LAST:event_jMenuItem1ActionPerformed
 
     private void jMenuItem3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem3ActionPerformed
@@ -1148,7 +1426,7 @@ public class Aplicatie extends javax.swing.JFrame {
             mesaj("Nici un abonat nu a fost selectat!","Eroare",JOptionPane.ERROR_MESSAGE);
         }else{
             while (selectedrows.length > 0) {
-                int confirm = JOptionPane.showConfirmDialog(null, "Doriti sa stergeti abonatul:" + CarteDeTelefon.abonati.get(selectedrows[0]) + "?", "Confirmati", JOptionPane.YES_NO_OPTION);
+                int confirm = JOptionPane.showConfirmDialog(null, "Doriti sa stergeti abonatul:" + model.getAbonati().get(selectedrows[0]) + "?", "Confirmati", JOptionPane.YES_NO_OPTION);
                 if (confirm == 0){
                     if(selectedrows.length == 1){
                         tAbonati.clearSelection();
@@ -1157,7 +1435,7 @@ public class Aplicatie extends javax.swing.JFrame {
                             tAbonati.changeSelection(selectedrows[i]-1, 4, false, false);
                         }
                     }
-                    CarteDeTelefon.abonati.remove(CarteDeTelefon.abonati.get(selectedrows[0]));
+                    model.getAbonati().remove(model.getAbonati().get(selectedrows[0]));
                     selectedrows = tAbonati.getSelectedRows();
                     model.refreshCarte();
                 }else{
@@ -1182,8 +1460,8 @@ public class Aplicatie extends javax.swing.JFrame {
             mesaj("Nici un abonat nu a fost selectat!","Eroare",JOptionPane.ERROR_MESSAGE);
         }else{
             for (int i = 0; i < selectedrows.length; i++) {
-                dModificaSetValues(CarteDeTelefon.abonati.get(selectedrows[i]));
-                editAbonat = CarteDeTelefon.abonati.get(selectedrows[i]);
+                dModificaSetValues(model.getAbonati().get(selectedrows[i]));
+                editAbonat = model.getAbonati().get(selectedrows[i]);
                 dModifica.setVisible(true);
             }
             
@@ -1443,6 +1721,82 @@ public class Aplicatie extends javax.swing.JFrame {
         jButton12.setVisible(false);
     }//GEN-LAST:event_jButton12ActionPerformed
 
+    private void jMenuItem9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem9ActionPerformed
+        dActivare.setVisible(true);
+    }//GEN-LAST:event_jMenuItem9ActionPerformed
+
+    private void jButton13ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton13ActionPerformed
+        try {
+            user.register(activationField.getText());
+            saveUser();
+            dActivare.setVisible(false);
+        } catch (IllegalArgumentException e) {
+            mesaj(e.getMessage(),"Eroare", JOptionPane.ERROR_MESSAGE);
+        }
+        checkRegistration();
+    }//GEN-LAST:event_jButton13ActionPerformed
+
+    private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
+        save();
+        mesaj("Lista s-a salvat cu succes!", "Informare", JOptionPane.INFORMATION_MESSAGE);
+    }//GEN-LAST:event_jMenuItem2ActionPerformed
+
+    private void save(){
+        if (model.getAbonati().size() <= 0){
+            mesaj("Lista nu contine nici un abonat!", "Eroare", JOptionPane.ERROR_MESSAGE);
+        } else {
+            if (user.getPathToSave() == null){
+                dSaveDir.setVisible(true);
+                if (fc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+                    File path = fc.getSelectedFile();
+                    if (path.isDirectory()) {
+                        mesaj("Ati ales un director!", "Eroare", JOptionPane.ERROR_MESSAGE);
+                    }else{
+                        user.setPathToSave(path);
+                        saveUser();
+                        saveList();
+                    }
+                }
+                dSaveDir.setVisible(false);
+            }else{
+                saveList();
+            }
+        }    
+    }
+    
+    private void fcActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fcActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_fcActionPerformed
+
+    private void jMenuItem10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem10ActionPerformed
+        if (model.getAbonati().size() <= 0){
+            mesaj("Lista nu contine nici un abonat!", "Eroare", JOptionPane.ERROR_MESSAGE);
+        } else {
+            dSaveDir.setVisible(true);
+            if (fc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+                File path = fc.getSelectedFile();
+                if (path.isDirectory()) {
+                    mesaj("Ati ales un director!", "Eroare", JOptionPane.ERROR_MESSAGE);
+                }else{
+                    user.setPathToSave(path);
+                    saveUser();
+                    saveList();
+                }
+            }
+            dSaveDir.setVisible(false);
+            mesaj("Lista s-a salvat cu succes!", "Informare", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }//GEN-LAST:event_jMenuItem10ActionPerformed
+
+    private void fc1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fc1ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_fc1ActionPerformed
+
+    private void jButton14ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton14ActionPerformed
+        save();
+        mesaj("Lista s-a salvat cu succes!", "Informare", JOptionPane.INFORMATION_MESSAGE);
+    }//GEN-LAST:event_jButton14ActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -1485,15 +1839,19 @@ public class Aplicatie extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem about;
+    private javax.swing.JTextField activationField;
     private javax.swing.JTextField addCnp;
     private javax.swing.JTextField addNume;
     private javax.swing.JTextField addPrenume;
     private javax.swing.JTextField addTelefon;
     private javax.swing.JDialog dAbout;
+    private javax.swing.JDialog dActivare;
     private javax.swing.JDialog dAdauga;
     private javax.swing.JDialog dFilter;
     private javax.swing.JDialog dModifica;
+    private javax.swing.JDialog dOpen;
     private javax.swing.JDialog dOrder;
+    private javax.swing.JDialog dSaveDir;
     private javax.swing.JTextField editCnp;
     private javax.swing.JRadioButton editFix;
     private javax.swing.JRadioButton editMobil;
@@ -1501,12 +1859,16 @@ public class Aplicatie extends javax.swing.JFrame {
     private javax.swing.JTextField editPrenume;
     private javax.swing.ButtonGroup editTelType;
     private javax.swing.JTextField editTelefon;
+    private javax.swing.JFileChooser fc;
+    private javax.swing.JFileChooser fc1;
     private javax.swing.JTextField filterText;
     private javax.swing.JRadioButton fix;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton10;
     private javax.swing.JButton jButton11;
     private javax.swing.JButton jButton12;
+    private javax.swing.JButton jButton13;
+    private javax.swing.JButton jButton14;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
@@ -1531,6 +1893,7 @@ public class Aplicatie extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
+    private javax.swing.JLabel jLabel16;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -1541,6 +1904,7 @@ public class Aplicatie extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel9;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JMenuItem jMenuItem1;
+    private javax.swing.JMenuItem jMenuItem10;
     private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JMenuItem jMenuItem3;
     private javax.swing.JMenuItem jMenuItem4;
@@ -1565,4 +1929,5 @@ public class Aplicatie extends javax.swing.JFrame {
     private javax.swing.ButtonGroup telType;
     private javax.swing.JTextArea textDespre;
     // End of variables declaration//GEN-END:variables
-}
+
+}    

@@ -5,6 +5,7 @@
  */
 package cartedetelefon;
 
+import java.io.Serializable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -12,7 +13,7 @@ import java.util.regex.Pattern;
  *
  * @author crist
  */
-public class NrTel {
+public class NrTel implements Serializable {
     private String numar;
     private String type;
     
