@@ -10,14 +10,14 @@
           <ComponentRef name="null"/>
         </Property>
         <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[500, 500]"/>
+          <Dimension value="[700, 600]"/>
         </Property>
         <Property name="modal" type="boolean" value="true"/>
         <Property name="modalExclusionType" type="java.awt.Dialog$ModalExclusionType" editor="org.netbeans.modules.form.editors.EnumEditor">
           <Value id="APPLICATION_EXCLUDE"/>
         </Property>
         <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[600, 600]"/>
+          <Dimension value="[700, 600]"/>
         </Property>
         <Property name="size" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
           <Dimension value="[600, 600]"/>
@@ -35,11 +35,12 @@
         <Container class="javax.swing.JScrollPane" name="jScrollPane1">
           <Properties>
             <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-              <Dimension value="[500, 500]"/>
+              <Dimension value="[700, 600]"/>
             </Property>
             <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-              <Dimension value="[500, 500]"/>
+              <Dimension value="[700, 600]"/>
             </Property>
+            <Property name="requestFocusEnabled" type="boolean" value="false"/>
           </Properties>
           <AuxValues>
             <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>
@@ -56,7 +57,13 @@
               <Properties>
                 <Property name="columns" type="int" value="20"/>
                 <Property name="rows" type="int" value="5"/>
-                <Property name="text" type="java.lang.String" value="Carte de telefoane&#xa;&#xa;Autor: Galina Logofatu&#xa;Versiune: 1.0&#xa;Creat pentru: curs Java 9 Decembrie 2017&#xa;Termen de predare: 9 Aprilie 2018&#xa;&#xa;Facilitati:&#xa;pozele pentru reclame se iau dinamic;&#xa;se poate defini cate poze de reclama sa apara in josul paginii&#xa;la dublu-click pe celula din tabel - se poate edita inline celula(se updateaza Abonatul)&#xa;cand sant selectate mai multe randuri, nu meaparat consecutive:&#xa;&#x9;- tasta DEL - intreaba daca vreu sa stergi fiecare abonat din selectie &#xa;&#x9;- tasta Enter - intreaba daca vreu sa modific fiecare abonat din selectie &#xa;Daca nu este nici un abonat in lista, unele butoane sant dezactivate&#xa;Ordonare: apasarea pe capul de tabel sau actionarea budonului de ordonare sau din meniu&#xa;Cautarea sau filtrarea se poate face dupa o anumita coloana sau dupa toate coloanele(cu operatorul OR)&#xa;Pentru nr de tel unice in Cartea de telefoane trebuie decomentat codul din clasa NrTel, in metoda: editTel;&#xa;Acum se pot inregistra mai multi abonati cu acelasi numar."/>
+                <Property name="text" type="java.lang.String" value="Carte de telefoane&#xa;&#xa;Autor: Galina Logofatu&#xa;Versiune: 1.0&#xa;Creat pentru: curs Java 9 Decembrie 2017&#xa;Termen de predare: 9 Aprilie 2018&#xa;&#xa;Facilitati:&#xa;pozele pentru reclame se iau dinamic;&#xa;se poate defini cate poze de reclama sa apara in josul paginii&#xa;la dublu-click pe celula din tabel - se poate edita inline celula(se updateaza Abonatul)&#xa;cand sant selectate mai multe randuri, nu meaparat consecutive:&#xa;&#x9;- tasta DEL - intreaba daca vreu sa stergi fiecare abonat din selectie &#xa;&#x9;- tasta Enter - intreaba daca vreu sa modific fiecare abonat din selectie &#xa;Daca nu este nici un abonat in lista, unele butoane sant dezactivate&#xa;Ordonare: apasarea pe capul de tabel sau actionarea budonului de ordonare sau din meniu&#xa;Cautarea sau filtrarea se poate face dupa o anumita coloana sau dupa toate coloanele(cu operatorul OR)&#xa;Pentru nr de tel unice in Cartea de telefoane trebuie decomentat codul din clasa NrTel, in metoda: editTel;&#xa;Acum se pot inregistra mai multi abonati cu acelasi numar.&#xa;&#xa;Codul de inregistrare(pentru a disparea reclamele-pozele de jos si pentru a se activa optiunile de open/save): 12345&#xa;La deschiderea aplicatie, aceasta este populata cu ultima lista salvata.&#xa;Exista un Tread care la fiecare 5 minute salveaza lista in ultimul fisier ales."/>
+                <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                  <Dimension value="[600, 600]"/>
+                </Property>
+                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                  <Dimension value="[600, 600]"/>
+                </Property>
               </Properties>
             </Component>
           </SubComponents>
@@ -891,6 +898,9 @@
     </Container>
     <Container class="javax.swing.JDialog" name="dOpen">
       <Properties>
+        <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[600, 600]"/>
+        </Property>
         <Property name="size" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
           <Dimension value="[600, 500]"/>
         </Property>

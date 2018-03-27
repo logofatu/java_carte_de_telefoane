@@ -79,6 +79,7 @@ public class Aplicatie extends javax.swing.JFrame {
 //    private String labels[] = model.getColumnsName();
     private User user = new User();
     private ListaAbonati l = new ListaAbonati();
+    Thread threadSalvare;
     
     public Aplicatie() {
         initComponents();
@@ -199,6 +200,25 @@ public class Aplicatie extends javax.swing.JFrame {
             jButton14.setEnabled(false);
             jMenuItem9.setEnabled(true);
         }else{
+            Thread threadSalvare = new Thread(){
+               @Override
+                public void run() {
+                    while(true){
+                        if (user.getPathToSave() != null){
+                            saveList();
+                        }
+                        try {
+                            Thread.sleep(1 * 60 * 1000);
+                        } catch (InterruptedException ex) {
+                            return;
+                        }
+                    }
+                }
+            };
+            if (!threadSalvare.isAlive()){
+                threadSalvare.start();
+            }
+            
             jMenuItem1.setEnabled(true);
             jMenuItem2.setEnabled(true);
             jMenuItem10.setEnabled(true);
@@ -325,6 +345,9 @@ public class Aplicatie extends javax.swing.JFrame {
             ois.close();
             fis.close();
             model.setAbonati(savedAbonati.abonati);
+            
+            user.setPathToSave(listaPath);
+            saveUser();
         } catch (FileNotFoundException ex) {
 //            Logger.getLogger(Aplicatie.class.getName()).log(Level.SEVERE, null, ex);
             mesaj(ex.getMessage(),"Eroare",JOptionPane.INFORMATION_MESSAGE);
@@ -479,18 +502,21 @@ public class Aplicatie extends javax.swing.JFrame {
         dAbout.setTitle("About");
         dAbout.setAlwaysOnTop(true);
         dAbout.setIconImage(null);
-        dAbout.setMinimumSize(new java.awt.Dimension(500, 500));
+        dAbout.setMinimumSize(new java.awt.Dimension(700, 600));
         dAbout.setModal(true);
         dAbout.setModalExclusionType(java.awt.Dialog.ModalExclusionType.APPLICATION_EXCLUDE);
-        dAbout.setPreferredSize(new java.awt.Dimension(600, 600));
+        dAbout.setPreferredSize(new java.awt.Dimension(700, 600));
         dAbout.setSize(new java.awt.Dimension(600, 600));
 
-        jScrollPane1.setMinimumSize(new java.awt.Dimension(500, 500));
-        jScrollPane1.setPreferredSize(new java.awt.Dimension(500, 500));
+        jScrollPane1.setMinimumSize(new java.awt.Dimension(700, 600));
+        jScrollPane1.setPreferredSize(new java.awt.Dimension(700, 600));
+        jScrollPane1.setRequestFocusEnabled(false);
 
         textDespre.setColumns(20);
         textDespre.setRows(5);
-        textDespre.setText("Carte de telefoane\n\nAutor: Galina Logofatu\nVersiune: 1.0\nCreat pentru: curs Java 9 Decembrie 2017\nTermen de predare: 9 Aprilie 2018\n\nFacilitati:\npozele pentru reclame se iau dinamic;\nse poate defini cate poze de reclama sa apara in josul paginii\nla dublu-click pe celula din tabel - se poate edita inline celula(se updateaza Abonatul)\ncand sant selectate mai multe randuri, nu meaparat consecutive:\n\t- tasta DEL - intreaba daca vreu sa stergi fiecare abonat din selectie \n\t- tasta Enter - intreaba daca vreu sa modific fiecare abonat din selectie \nDaca nu este nici un abonat in lista, unele butoane sant dezactivate\nOrdonare: apasarea pe capul de tabel sau actionarea budonului de ordonare sau din meniu\nCautarea sau filtrarea se poate face dupa o anumita coloana sau dupa toate coloanele(cu operatorul OR)\nPentru nr de tel unice in Cartea de telefoane trebuie decomentat codul din clasa NrTel, in metoda: editTel;\nAcum se pot inregistra mai multi abonati cu acelasi numar.");
+        textDespre.setText("Carte de telefoane\n\nAutor: Galina Logofatu\nVersiune: 1.0\nCreat pentru: curs Java 9 Decembrie 2017\nTermen de predare: 9 Aprilie 2018\n\nFacilitati:\npozele pentru reclame se iau dinamic;\nse poate defini cate poze de reclama sa apara in josul paginii\nla dublu-click pe celula din tabel - se poate edita inline celula(se updateaza Abonatul)\ncand sant selectate mai multe randuri, nu meaparat consecutive:\n\t- tasta DEL - intreaba daca vreu sa stergi fiecare abonat din selectie \n\t- tasta Enter - intreaba daca vreu sa modific fiecare abonat din selectie \nDaca nu este nici un abonat in lista, unele butoane sant dezactivate\nOrdonare: apasarea pe capul de tabel sau actionarea budonului de ordonare sau din meniu\nCautarea sau filtrarea se poate face dupa o anumita coloana sau dupa toate coloanele(cu operatorul OR)\nPentru nr de tel unice in Cartea de telefoane trebuie decomentat codul din clasa NrTel, in metoda: editTel;\nAcum se pot inregistra mai multi abonati cu acelasi numar.\n\nCodul de inregistrare(pentru a disparea reclamele-pozele de jos si pentru a se activa optiunile de open/save): 12345\nLa deschiderea aplicatie, aceasta este populata cu ultima lista salvata.\nExista un Tread care la fiecare 5 minute salveaza lista in ultimul fisier ales.");
+        textDespre.setMinimumSize(new java.awt.Dimension(600, 600));
+        textDespre.setPreferredSize(new java.awt.Dimension(600, 600));
         jScrollPane1.setViewportView(textDespre);
 
         dAbout.getContentPane().add(jScrollPane1, java.awt.BorderLayout.CENTER);
@@ -1011,6 +1037,7 @@ public class Aplicatie extends javax.swing.JFrame {
         gridBagConstraints.insets = new java.awt.Insets(19, 19, 19, 19);
         dActivare.getContentPane().add(jButton13, gridBagConstraints);
 
+        dOpen.setMinimumSize(new java.awt.Dimension(600, 600));
         dOpen.setSize(new java.awt.Dimension(600, 500));
 
         fc1.setApproveButtonToolTipText("");
@@ -1324,9 +1351,7 @@ public class Aplicatie extends javax.swing.JFrame {
                 if (path.isDirectory()) {
                     mesaj("Ati ales un director!", "Eroare", JOptionPane.ERROR_MESSAGE);
                 }else{
-                    user.setPathToSave(path);
-                    saveUser();
-                    openList(user.getPathToSave());
+                    openList(path);
                 }
             }
 //        fc1.setVisible(false);
@@ -1730,6 +1755,7 @@ public class Aplicatie extends javax.swing.JFrame {
             user.register(activationField.getText());
             saveUser();
             dActivare.setVisible(false);
+            rZone.setVisible(false);
         } catch (IllegalArgumentException e) {
             mesaj(e.getMessage(),"Eroare", JOptionPane.ERROR_MESSAGE);
         }

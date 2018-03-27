@@ -93,7 +93,7 @@ public class CarteDeTelefon extends AbstractTableModel{
     
     public void setAbonati(List<Abonat> a){
         this.abonati = a;
-        refreshCarte();
+        fireTableDataChanged();
     }
     public List<Abonat> getAbonati(){
         return abonati;
